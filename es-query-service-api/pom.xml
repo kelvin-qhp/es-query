@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example</groupId>
+        <artifactId>es-query</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>es-query-service-api</artifactId>
+    <packaging>jar</packaging>
+    <description>SearchService API：查询 DTO、条件/打分对象、聚合 DSL 与异常</description>
+
+    <dependencies>
+        <!-- API 签名暴露官方客户端类型（Query/SearchRequest/Hit/FieldValue 等） -->
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+        </dependency>
+    </dependencies>
+</project>
