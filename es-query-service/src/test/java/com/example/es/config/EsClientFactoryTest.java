@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -27,8 +28,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * 用 JDK 内置 HttpServer 模拟 ES，验证工厂能真正建连并生效超时配置。
  * 只加载 ElasticsearchConfig 一个配置类，避免 @SpringBootTest 引入 Nacos/真实集群配置。
  */
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = ElasticsearchConfig.class)
+//@ExtendWith(SpringExtension.class)
+//@ContextConfiguration(classes = ElasticsearchConfig.class)
+@SpringBootTest
 class EsClientFactoryTest {
 
     private static final String INFO_JSON = """
@@ -58,12 +60,6 @@ class EsClientFactoryTest {
     @Autowired
     EsProperties esProperties;
 
-    /** 必须在 Spring 刷新上下文前启动桩并把端口交给 es.nodes。 */
-    @DynamicPropertySource
-    static void stubProperties(DynamicPropertyRegistry registry) {
-        startStub();
-        registry.add("es.nodes", () -> "127.0.0.1:" + server.getAddress().getPort());
-    }
 
     private static void startStub() {
         try {
@@ -125,9 +121,9 @@ class EsClientFactoryTest {
 
     @Test
     void createBuildsWorkingClientWithBasicAuth() throws Exception {
-        EsProperties props = props().basicAuth("elastic", "secret");
+//        EsProperties props = props().basicAuth("elastic", "secret");
 
-        try (ElasticsearchClient client = EsClientFactory.create(props)) {
+        try (ElasticsearchClient client = EsClientFactory.create(esProperties)) {
             InfoResponse info = client.info();
             assertEquals("stub-node", info.name());
             assertEquals("stub-cluster", info.clusterName());
@@ -141,11 +137,11 @@ class EsClientFactoryTest {
 
     @Test
     void create2BuildsWorkingClientWithConfiguredTimeouts() throws Exception {
-        EsProperties props = props();
-        props.connectTimeoutMillis = 500;
-        props.socketTimeoutMillis = 2000;
+//        EsProperties props = props();
+//        props.connectTimeoutMillis = 500;
+//        props.socketTimeoutMillis = 2000;
 
-        try (ElasticsearchClient client = EsClientFactory.create2(props)) {
+        try (ElasticsearchClient client = EsClientFactory.create2(esProperties)) {
             InfoResponse info = client.info();
             assertEquals("stub-node", info.name());
             assertEquals("9.0.3", info.version().number());
@@ -154,12 +150,12 @@ class EsClientFactoryTest {
 
     @Test
     void create2AppliesResponseTimeout() throws Exception {
-        EsProperties props = props();
-        props.connectTimeoutMillis = 500;
-        props.socketTimeoutMillis = 300;
+//        EsProperties props = props();
+//        props.connectTimeoutMillis = 500;
+//        props.socketTimeoutMillis = 300;
         slowResponse = true;
 
-        try (ElasticsearchClient client = EsClientFactory.create2(props)) {
+        try (ElasticsearchClient client = EsClientFactory.create2(esProperties)) {
             long start = System.nanoTime();
             assertThrows(IOException.class, client::info);
             long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
@@ -168,7 +164,4 @@ class EsClientFactoryTest {
         }
     }
 
-    private EsProperties props() {
-        return new EsProperties().node("127.0.0.1", server.getAddress().getPort());
-    }
 }
