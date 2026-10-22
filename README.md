@@ -174,7 +174,7 @@ es-query/
 
 ## 验证
 
-- `mvn test`：23 个 DSL 生成单测全部通过（序列化为标准 ES JSON），含 function_score 打分、collapse 折叠与 nested/filter/dateHistogram/range/composite 聚合用例。
+- `mvn test`：23 个单测全部通过（序列化为标准 ES JSON），含 function_score 打分、collapse 折叠与 nested/filter/dateHistogram/range/composite 聚合用例。测试类按被测类命名并与其同包：`QueryBuilderUtilTest`、`SearchServiceImplTest`（impl 模块）、`HitWrapperTest`（api 模块）。
 - `SearchServiceIntegrationTest` 为端到端示例，本地起 ES 9 后去掉 `@Disabled` 运行。
 
 ## 注意

@@ -1,6 +1,11 @@
-*.class
-*.jar
-*.log
-.DS_Store
 target/
+*.class
+*.log
+
 .idea/
+*.iml
+.vscode/
+.DS_Store
+
+# 本地配置：含真实 Nacos/ES 凭据，不入库；模板见 application.yml.example
+es-query-service/src/main/resources/application.yml

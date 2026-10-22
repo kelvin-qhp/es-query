@@ -1,13 +1,10 @@
 package com.example.es.impl;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.core.search.TotalHitsRelation;
 import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import com.example.es.dto.Collapse;
 import com.example.es.dto.Condition;
-import com.example.es.dto.HitWrapper;
 import com.example.es.dto.SearchRequestDto;
 import com.example.es.util.JsonUtils;
 import jakarta.json.stream.JsonGenerator;
@@ -15,14 +12,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * collapse 折叠 DSL 生成与结果读取单测。
+ * SearchServiceImpl 请求 DSL 生成单测（不需要 ES 服务）。
  */
-class CollapseTest {
+class SearchServiceImplTest {
 
     private static final JsonpMapper MAPPER = new JacksonJsonpMapper(JsonUtils.mapper());
 
@@ -69,16 +65,5 @@ class CollapseTest {
     void noCollapseKeepsRequestClean() {
         String json = toJson(new SearchRequestDto("orders").filter(Condition.term("status", 1)));
         assertFalse(json.contains("collapse"), json);
-    }
-
-    @Test
-    void hitWrapperExposesInnerHits() {
-        Hit<String> hit = Hit.of(h -> h.id("o-1").index("orders").source("main")
-                .innerHits("others", ihr -> ihr.hits(hm -> hm
-                        .total(t -> t.value(1).relation(TotalHitsRelation.Eq))
-                        .hits(hh -> hh.id("o-2").index("orders")))));
-        HitWrapper<String> w = HitWrapper.from(hit);
-        assertEquals(1, w.innerHits().get("others").hits().hits().size());
-        assertEquals("o-2", w.innerHits().get("others").hits().hits().get(0).id());
     }
 }
