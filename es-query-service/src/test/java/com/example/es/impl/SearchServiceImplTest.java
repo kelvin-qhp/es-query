@@ -23,7 +23,8 @@ class SearchServiceImplTest {
     private static final JsonpMapper MAPPER = new JacksonJsonpMapper(JsonUtils.mapper());
 
     private static String toJson(SearchRequestDto dto) {
-        SearchRequest req = new SearchServiceImpl(null).toRequest(dto, null);
+        // toRequest 只做 DSL 构建，不访问客户端；client 注入字段保持 null 即可
+        SearchRequest req = new SearchServiceImpl().toRequest(dto, null);
         StringWriter sw = new StringWriter();
         try (JsonGenerator gen = MAPPER.jsonProvider().createGenerator(sw)) {
             req.serialize(gen, MAPPER);

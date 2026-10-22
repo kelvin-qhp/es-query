@@ -1,7 +1,5 @@
 package com.example.es.config;
 
-import com.example.es.service.SearchService;
-import com.example.es.impl.SearchServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +8,8 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
- * Spring Boot 装配示例（无 Spring 环境时可直接用 EsClientFactory + new SearchServiceImpl）。
+ * ElasticsearchClient 装配：EsProperties + 客户端两个 Bean。
+ * SearchServiceImpl 自身是 {@code @Service}，客户端由容器按类型注入。
  */
 @Configuration
 public class ElasticsearchConfig {
@@ -50,11 +49,6 @@ public class ElasticsearchConfig {
 
     @Bean(destroyMethod = "close")
     public co.elastic.clients.elasticsearch.ElasticsearchClient elasticsearchClient(EsProperties props) {
-        return EsClientFactory.create(props);
-    }
-
-    @Bean
-    public SearchService searchService(co.elastic.clients.elasticsearch.ElasticsearchClient client) {
-        return new SearchServiceImpl(client);
+        return EsClientFactory.create2(props);
     }
 }

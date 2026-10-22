@@ -1,7 +1,7 @@
 # es-query-service
 
 基于 **官方 `co.elastic.clients:elasticsearch-java` 9.x** 客户端的查询 & 聚合 Service 封装。
-纯 Java 17+，不强制 Spring（附带一个 `@Configuration` 装配示例）。
+Spring Boot 3 装配：`SearchServiceImpl` 为 `@Service`，`ElasticsearchClient` 由容器注入。
 
 ## 能力总览
 
@@ -20,10 +20,9 @@
 ## 快速开始
 
 ```java
-// 1. 构建客户端（也可用 ElasticsearchConfig 交给 Spring 装配）
-ElasticsearchClient client = EsClientFactory.create(
-        new EsProperties().node("localhost", 9200).basicAuth("elastic", "pwd"));
-SearchService search = new SearchServiceImpl(client);
+// 1. SearchServiceImpl 是 @Service，注入即用（客户端由 ElasticsearchConfig 装配）
+@Autowired
+SearchService search;
 
 // 2. 条件查询 + 分页 + 高亮
 SearchRequestDto dto = new SearchRequestDto("products")
@@ -137,7 +136,8 @@ SearchRequestDto dto = new SearchRequestDto("orders")
 
 ## Spring Boot 集成
 
-`com.example.es.config.ElasticsearchConfig` 提供 `EsProperties / ElasticsearchClient / SearchService` 三个 Bean，
+`com.example.es.config.ElasticsearchConfig` 提供 `EsProperties / ElasticsearchClient` 两个 Bean；
+`SearchServiceImpl`（`@Service`）通过 `@Autowired` 字段注入 `ElasticsearchClient`，直接注入 `SearchService` 使用即可。
 配置项：
 
 ```yaml
@@ -174,8 +174,8 @@ es-query/
 
 ## 验证
 
-- `mvn test`：23 个单测全部通过（序列化为标准 ES JSON），含 function_score 打分、collapse 折叠与 nested/filter/dateHistogram/range/composite 聚合用例。测试类按被测类命名并与其同包：`QueryBuilderUtilTest`、`SearchServiceImplTest`（impl 模块）、`HitWrapperTest`（api 模块）。
-- `SearchServiceIntegrationTest` 为端到端示例，本地起 ES 9 后去掉 `@Disabled` 运行。
+- `mvn test`：29 个单测全部通过（序列化为标准 ES JSON），含 function_score 打分、collapse 折叠与 nested/filter/dateHistogram/range/composite 聚合用例；`EsClientFactoryTest` 用 JDK `HttpServer` 模拟 ES，验证建连、Basic Auth 与响应超时生效。测试类按被测类命名并与其同包：`QueryBuilderUtilTest`、`SearchServiceImplTest`、`EsClientFactoryTest`（service 模块）、`HitWrapperTest`（api 模块）。
+- `SearchServiceIntegrationTest` 为 `@SpringBootTest` 端到端示例，需要本地 ES 9（localhost:9200）；本地没有实例时执行 `mvn test -Dtest='QueryBuilderUtilTest,SearchServiceImplTest,EsClientFactoryTest,HitWrapperTest' -Dsurefire.failIfNoSpecifiedTests=false`，或给该类加回 `@Disabled`。
 
 ## 注意
 

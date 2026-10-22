@@ -1,38 +1,37 @@
 package com.example.es;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import com.example.es.config.EsClientFactory;
-import com.example.es.config.EsProperties;
 import com.example.es.core.Agg;
 import com.example.es.dto.AggResult;
 import com.example.es.dto.Condition;
 import com.example.es.dto.SearchRequestDto;
 import com.example.es.dto.SearchResultDto;
 import com.example.es.service.SearchService;
-import com.example.es.impl.SearchServiceImpl;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
 /**
  * 端到端示例：本地起 ES 9.x（如 docker run -p 9200:9200 -e discovery.type=single-node -e xpack.security.enabled=false docker.elastic.co/elasticsearch/elasticsearch:9.0.3）
- * 后去掉 @Disabled 运行。
+ * 运行；客户端与 SearchService 均由 Spring 容器注入。
  */
-@Disabled("需要本地 ES 9.x 实例，手动开启")
+@SpringBootTest(properties = "es.nodes=localhost:9200")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SearchServiceIntegrationTest {
 
-    static ElasticsearchClient client;
-    static SearchService service;
+    @Autowired
+    ElasticsearchClient client;
+    @Autowired
+    SearchService service;
 
     @BeforeAll
-    static void setUp() throws Exception {
-        client = EsClientFactory.create(new EsProperties().node("localhost", 9200));
-        service = new SearchServiceImpl(client);
-
+    void setUp() throws Exception {
         if (!client.indices().exists(e -> e.index("it_products")).value()) {
             client.indices().create(c -> c.index("it_products"));
         }
@@ -50,9 +49,9 @@ class SearchServiceIntegrationTest {
     }
 
     @AfterAll
-    static void tearDown() throws Exception {
+    void tearDown() throws Exception {
         client.indices().delete(d -> d.index("it_products"));
-        client.close();
+        // ElasticsearchClient 由 Spring 容器负责关闭
     }
 
     @Test

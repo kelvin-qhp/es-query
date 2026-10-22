@@ -22,6 +22,8 @@ import com.example.es.dto.SearchResultDto;
 import com.example.es.service.SearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.AbstractMap;
@@ -33,17 +35,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * SearchService 默认实现。依赖官方 ElasticsearchClient（elasticsearch-java 9.x）。
+ * SearchService 默认实现，由 Spring 容器管理，ElasticsearchClient 通过字段注入（{@code @Autowired}）。
  */
+@Service
 public class SearchServiceImpl implements SearchService {
 
     private static final Logger log = LoggerFactory.getLogger(SearchServiceImpl.class);
 
-    private final ElasticsearchClient client;
-
-    public SearchServiceImpl(ElasticsearchClient client) {
-        this.client = client;
-    }
+    @Autowired
+    private ElasticsearchClient client;
 
     // ==================== 查询 ====================
 

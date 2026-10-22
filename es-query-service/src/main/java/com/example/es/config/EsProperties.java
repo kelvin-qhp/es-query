@@ -1,11 +1,14 @@
 package com.example.es.config;
 
+import lombok.Data;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * ES 连接配置（独立 POJO，Spring 通过 @Bean 装配；也可手动 new）。
  */
+@Data
 public class EsProperties {
 
     /** 节点列表：host:port 或 ip:port，支持多个做客户端侧负载 */
