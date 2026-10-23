@@ -3,11 +3,13 @@ package com.example.es.service;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.util.ObjectBuilder;
 import com.example.es.core.Agg;
 import com.example.es.dto.AggResult;
 import com.example.es.dto.SearchRequestDto;
 import com.example.es.dto.SearchResultDto;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,9 @@ public interface SearchService {
 
     /** 执行 DTO 查询，返回文档列表 */
     <T> List<T> search(SearchRequestDto dto, Class<T> clazz);
+
+    /** 执行 DTO 查询，返回官方 SearchResponse（文档为 ObjectNode），无需指定反序列化类型 */
+    SearchResponse<ObjectNode> search(SearchRequestDto dto);
 
     /** 执行 DTO 查询，返回完整结果（含游标、高亮、总数） */
     <T> SearchResultDto<T> searchPage(SearchRequestDto dto, Class<T> clazz);

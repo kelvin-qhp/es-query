@@ -10,9 +10,12 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonpMapper;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.util.ObjectBuilder;
 import com.example.es.core.Agg;
 import com.example.es.exception.EsException;
+import com.example.es.util.JsonUtils;
 import com.example.es.util.QueryBuilderUtil;
 import com.example.es.dto.AggResult;
 import com.example.es.dto.Condition;
@@ -20,12 +23,15 @@ import com.example.es.dto.HitWrapper;
 import com.example.es.dto.SearchRequestDto;
 import com.example.es.dto.SearchResultDto;
 import com.example.es.service.SearchService;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.json.stream.JsonGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -41,6 +47,7 @@ import java.util.function.Function;
 public class SearchServiceImpl implements SearchService {
 
     private static final Logger log = LoggerFactory.getLogger(SearchServiceImpl.class);
+    private static final JsonpMapper DSL_MAPPER = new JacksonJsonpMapper(JsonUtils.mapper());
 
     @Autowired
     private ElasticsearchClient client;
@@ -50,6 +57,15 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public <T> List<T> search(SearchRequestDto dto, Class<T> clazz) {
         return searchPage(dto, clazz).documents;
+    }
+
+    @Override
+    public SearchResponse<ObjectNode> search(SearchRequestDto dto) {
+        try {
+            return client.search(toRequest(dto, null), ObjectNode.class);
+        } catch (IOException e) {
+            throw new EsException("查询失败 index=" + dto.index, e);
+        }
     }
 
     @Override
@@ -198,7 +214,7 @@ public class SearchServiceImpl implements SearchService {
 
     SearchRequest toRequest(SearchRequestDto dto, Map<String, Aggregation> aggs) {
         Query query = QueryBuilderUtil.buildDto(dto);
-        return SearchRequest.of(s -> {
+        SearchRequest request = SearchRequest.of(s -> {
             s.index(dto.index);
             s.query(query);
             if (dto.size != null) {
@@ -273,6 +289,18 @@ public class SearchServiceImpl implements SearchService {
             }
             return s;
         });
+        if (log.isDebugEnabled()) {
+            log.debug("ES DSL index={} request={}", dto.index, toJson(request));
+        }
+        return request;
+    }
+
+    private static String toJson(SearchRequest request) {
+        StringWriter writer = new StringWriter();
+        try (JsonGenerator generator = DSL_MAPPER.jsonProvider().createGenerator(writer)) {
+            request.serialize(generator, DSL_MAPPER);
+        }
+        return writer.toString();
     }
 
     private <T> SearchResultDto<T> toResult(SearchResponse<T> resp, SearchRequestDto dto, long took) {

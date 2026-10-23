@@ -11,13 +11,17 @@ import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.http.nio.ssl.BasicClientTlsStrategy;
 import org.apache.hc.core5.util.Timeout;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -54,6 +58,7 @@ public final class EsClientFactory {
                 .toList();
         Rest5Client restClient = Rest5Client.builder(nodes)
                 .setHttpClient(httpClient(props))
+                .setDefaultHeaders(authHeaders(props))
                 .build();
 
         Rest5ClientTransport transport = new Rest5ClientTransport(
@@ -61,6 +66,19 @@ public final class EsClientFactory {
         );
 
         return new ElasticsearchClient(transport);
+    }
+
+    /** Rest5Client 没有 username/apiKey 方法，认证只能通过默认请求头注入。 */
+    private static Header[] authHeaders(EsProperties props) {
+        if (props.getApiKey() != null && !props.getApiKey().isBlank()) {
+            return new Header[]{new BasicHeader("Authorization", "ApiKey " + props.getApiKey())};
+        }
+        if (props.getUsername() != null && !props.getUsername().isBlank()) {
+            String basic = Base64.getEncoder().encodeToString(
+                    (props.getUsername() + ":" + props.getPassword()).getBytes(StandardCharsets.UTF_8));
+            return new Header[]{new BasicHeader("Authorization", "Basic " + basic)};
+        }
+        return new Header[0];
     }
 
     /**

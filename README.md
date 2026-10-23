@@ -40,6 +40,10 @@ SearchResultDto<Product> result = search.searchPage(dto, Product.class);
 result.documents.forEach(p -> ...);
 result.hits.get(0).highlightText("title");
 
+// 无需指定文档类型：直接返回官方 SearchResponse（文档为 ObjectNode）
+SearchResponse<ObjectNode> resp = search.search(dto);
+resp.hits().hits().forEach(h -> ...);
+
 // 3. 聚合
 AggResult agg = search.aggregate(new SearchRequestDto("orders"), List.of(
         Agg.terms("by_brand", "brand").size(10).orderCountDesc()
@@ -182,3 +186,4 @@ es-query/
 - 封装针对 `elasticsearch-java` **9.0.3**（9.x API：类型化 RangeQuery、内建 Rest5ClientTransport、`sterms()/lterms()/dterms()` 聚合结果等），8.x 客户端不适用。
 - 客户端版本需与 ES 服务端大版本一致（9.x 客户端可连 8.18+ 服务端）。
 - `searchAll`/`searchAfter` 依赖确定性排序；不指定时会补 `_shard_doc` 排序。
+- 调试 DSL：`SearchServiceImpl` 以 DEBUG 输出完整请求 JSON（`ES DSL index=... request=...`，search/searchPage/aggregate/searchWithAggs 均覆盖），Spring Boot 下配置 `logging.level.com.example.es.impl: DEBUG` 即可。
